@@ -1,0 +1,54 @@
+# RabbitMQ队列配置
+rabbitmq:
+  # RabbitMQ服务器配置
+  host: "localhost"
+  port: 5672
+  username: "guest"
+  password: "guest"
+  virtual_host: "/"
+  
+  # 连接配置
+  connection_timeout: 30
+  heartbeat: 60
+  
+  # 队列配置
+  queues:
+    # 接收消息队列
+    incoming_messages:
+      durable: true
+      ttl: 300000  # 5分钟TTL
+    
+    # 发送消息队列  
+    outgoing_messages:
+      durable: true
+      ttl: 300000
+    
+    # 客户端注册队列
+    client_registry:
+      durable: true
+
+# 分布式部署配置
+distributed:
+  # 是否启用队列模式
+  enabled: true
+  
+  # 客户端模式 - 用于多个机器人客户端
+  client_mode:
+    enabled: false
+    client_id: "client_001"  # 可选，自动生成如果未指定
+    
+    # 平台配置
+    platform_type: "wecom"  # wecom, wechat, qq等
+    
+  # 服务端模式 - 用于LangBot核心处理
+  server_mode:
+    enabled: true
+    
+    # 负载均衡策略
+    load_balancing:
+      strategy: "round_robin"  # round_robin, least_connections, random
+      
+    # 客户端管理
+    client_management:
+      heartbeat_interval: 30
+      offline_timeout: 90
