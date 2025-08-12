@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/hover-card';
 import { useTranslation } from 'react-i18next';
 import { i18nObj } from '@/i18n/I18nProvider';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function DynamicFormItemComponent({
   config,
@@ -315,7 +316,7 @@ export default function DynamicFormItemComponent({
                   </Select>
                 )}
                 {/* 内容输入 */}
-                <Input
+                <Textarea
                   className="w-[300px]"
                   value={item.content}
                   onChange={(e) => {
