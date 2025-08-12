@@ -8,13 +8,7 @@ import {
   CardTitle,
   CardDescription,
 } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { LanguageSelector } from '@/components/ui/language-selector';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -26,14 +20,13 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { httpClient } from '@/app/infra/http/HttpClient';
 import { useRouter } from 'next/navigation';
-import { Mail, Lock, Globe } from 'lucide-react';
+import { Mail, Lock } from 'lucide-react';
 import langbotIcon from '@/app/assets/langbot-logo.webp';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
-import i18n from '@/i18n';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 const formSchema = (t: (key: string) => string) =>
@@ -45,7 +38,6 @@ const formSchema = (t: (key: string) => string) =>
 export default function Register() {
   const router = useRouter();
   const { t } = useTranslation();
-  const [currentLanguage, setCurrentLanguage] = useState<string>(i18n.language);
 
   const form = useForm<z.infer<ReturnType<typeof formSchema>>>({
     resolver: zodResolver(formSchema(t)),
@@ -56,57 +48,8 @@ export default function Register() {
   });
 
   useEffect(() => {
-    judgeLanguage();
     getIsInitialized();
   }, []);
-
-  const judgeLanguage = () => {
-    if (i18n.language === 'zh-CN' || i18n.language === 'zh-Hans') {
-      setCurrentLanguage('zh-Hans');
-      localStorage.setItem('langbot_language', 'zh-Hans');
-    } else if (i18n.language === 'zh-TW' || i18n.language === 'zh-Hant') {
-      setCurrentLanguage('zh-Hant');
-      localStorage.setItem('langbot_language', 'zh-Hant');
-    } else if (i18n.language === 'ja' || i18n.language === 'ja-JP') {
-      setCurrentLanguage('ja-JP');
-      localStorage.setItem('langbot_language', 'ja-JP');
-    } else {
-      setCurrentLanguage('en-US');
-      localStorage.setItem('langbot_language', 'en-US');
-    }
-    // check if the language is already set
-    const lang = localStorage.getItem('langbot_language');
-    console.log('lang: ', lang);
-    if (lang) {
-      i18n.changeLanguage(lang);
-      setCurrentLanguage(lang);
-    } else {
-      const language = navigator.language;
-      if (language) {
-        let lang = 'zh-Hans';
-        if (language === 'zh-CN') {
-          lang = 'zh-Hans';
-        } else if (language === 'zh-TW') {
-          lang = 'zh-Hant';
-        } else if (language === 'ja' || language === 'ja-JP') {
-          lang = 'ja-JP';
-        } else {
-          lang = 'en-US';
-        }
-        console.log('language: ', lang);
-        i18n.changeLanguage(lang);
-        setCurrentLanguage(lang);
-        localStorage.setItem('langbot_language', lang);
-      }
-    }
-  };
-
-  const handleLanguageChange = (value: string) => {
-    console.log('handleLanguageChange: ', value);
-    i18n.changeLanguage(value);
-    setCurrentLanguage(value);
-    localStorage.setItem('langbot_language', value);
-  };
 
   function getIsInitialized() {
     httpClient
@@ -145,21 +88,7 @@ export default function Register() {
         <CardHeader>
           <div className="flex justify-between items-center mb-6">
             <ThemeToggle />
-            <Select
-              value={currentLanguage}
-              onValueChange={handleLanguageChange}
-            >
-              <SelectTrigger className="w-[140px]">
-                <Globe className="h-4 w-4 mr-2" />
-                <SelectValue placeholder={t('common.language')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="zh-Hans">简体中文</SelectItem>
-                <SelectItem value="zh-Hant">繁體中文</SelectItem>
-                <SelectItem value="en-US">English</SelectItem>
-                <SelectItem value="ja-JP">日本語</SelectItem>
-              </SelectContent>
-            </Select>
+            <LanguageSelector />
           </div>
           <img
             src={langbotIcon.src}

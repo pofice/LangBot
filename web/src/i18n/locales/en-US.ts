@@ -2,6 +2,8 @@ const enUS = {
   common: {
     login: 'Login',
     logout: 'Logout',
+    accountOptions: 'Account',
+    account: 'Account',
     email: 'Email',
     password: 'Password',
     welcome: 'Welcome back to LangBot 👋',
@@ -41,6 +43,7 @@ const enUS = {
     test: 'Test',
     forgotPassword: 'Forgot Password?',
     loading: 'Loading...',
+    theme: 'Theme',
   },
   notFound: {
     title: 'Page not found',

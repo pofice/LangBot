@@ -2,6 +2,8 @@ const jaJP = {
   common: {
     login: 'ログイン',
     logout: 'ログアウト',
+    accountOptions: 'アカウントオプション',
+    account: 'アカウント',
     email: 'メールアドレス',
     password: 'パスワード',
     welcome: 'LangBot へおかえりなさい 👋',
@@ -42,6 +44,7 @@ const jaJP = {
     test: 'テスト',
     forgotPassword: 'パスワードを忘れた？',
     loading: '読み込み中...',
+    theme: 'テーマ',
   },
   notFound: {
     title: 'ページが見つかりません',
