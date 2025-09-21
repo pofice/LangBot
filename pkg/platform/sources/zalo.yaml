@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: MessagePlatformAdapter
+metadata:
+  name: zalo
+  label:
+    en_US: Zalo
+    zh_Hans: Zalo
+  description:
+    en_US: Zalo Official Account Adapter
+    zh_Hans: Zalo 官方账号适配器
+  icon: zalo.png
+spec:
+  config:
+    - name: app_id
+      label:
+        en_US: App ID
+        zh_Hans: 应用 ID
+      type: string
+      required: true
+      default: ""
+    - name: access_token
+      label:
+        en_US: Access Token
+        zh_Hans: 访问令牌
+      type: string
+      required: true
+      default: ""
+    - name: secret_key
+      label:
+        en_US: Secret Key
+        zh_Hans: 密钥
+      type: string
+      required: true
+      default: ""
+    - name: verify_token
+      label:
+        en_US: Verify Token
+        zh_Hans: 校验令牌
+      type: string
+      required: true
+      default: ""
+    - name: host
+      label:
+        en_US: Host
+        zh_Hans: 监听地址
+      type: string
+      required: false
+      default: "0.0.0.0"
+    - name: port
+      label:
+        en_US: Port
+        zh_Hans: 监听端口
+      type: int
+      required: true
+      default: 2290
+execution:
+  python:
+    path: ./zalo.py
+    attr: ZaloAdapter
+
+
