@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: MessagePlatformAdapter
+metadata:
+  name: facebook
+  label:
+    en_US: Facebook Messenger
+    zh_Hans: Facebook Messenger
+  description:
+    en_US: Facebook Messenger Adapter
+    zh_Hans: Facebook Messenger 适配器，请查看文档了解使用方式
+  icon: facebook.svg
+spec:
+  config:
+    - name: page_id
+      label:
+        en_US: Page ID
+        zh_Hans: 页面 ID
+      type: string
+      required: true
+      default: ""
+    - name: page_access_token
+      label:
+        en_US: Page Access Token
+        zh_Hans: 页面访问令牌
+      type: string
+      required: true
+      default: ""
+    - name: verify_token
+      label:
+        en_US: Verify Token
+        zh_Hans: 校验 Token
+      type: string
+      required: true
+      default: ""
+    - name: app_secret
+      label:
+        en_US: App Secret
+        zh_Hans: 应用密钥
+      type: string
+      required: false
+      default: ""
+    - name: graph_version
+      label:
+        en_US: Graph API Version
+        zh_Hans: Graph API 版本
+      type: string
+      required: false
+      default: v17.0
+    - name: webhook_path
+      label:
+        en_US: Webhook Path
+        zh_Hans: Webhook 路径
+      type: string
+      required: false
+      default: /facebook/webhook
+    - name: host
+      label:
+        en_US: Listen Host
+        zh_Hans: 监听地址
+      type: string
+      required: false
+      default: 0.0.0.0
+    - name: port
+      label:
+        en_US: Listen Port
+        zh_Hans: 监听端口
+      type: number
+      required: false
+      default: 5010
+    - name: enable-stream-reply
+      label:
+        en_US: Enable Stream Reply Mode
+        zh_Hans: 启用流式回复模式
+      type: boolean
+      required: false
+      default: false
+execution:
+  python:
+    path: ./facebook.py
+    attr: FacebookAdapter
+
