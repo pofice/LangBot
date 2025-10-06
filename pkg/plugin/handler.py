@@ -536,7 +536,7 @@ class RuntimeConnectionHandler(handler.Handler):
             {
                 'event_context': event_context,
             },
-            timeout=30,
+            timeout=60,
         )
 
         return result
@@ -546,7 +546,7 @@ class RuntimeConnectionHandler(handler.Handler):
         result = await self.call_action(
             LangBotToRuntimeAction.LIST_TOOLS,
             {},
-            timeout=10,
+            timeout=20,
         )
 
         return result['tools']
@@ -581,7 +581,7 @@ class RuntimeConnectionHandler(handler.Handler):
                 'tool_name': tool_name,
                 'tool_parameters': parameters,
             },
-            timeout=30,
+            timeout=60,
         )
 
         return result['tool_response']
@@ -602,7 +602,7 @@ class RuntimeConnectionHandler(handler.Handler):
             {
                 'command_context': command_context,
             },
-            timeout=30,
+            timeout=60,
         )
 
         async for ret in gen:
