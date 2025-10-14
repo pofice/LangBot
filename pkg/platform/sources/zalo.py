@@ -61,7 +61,7 @@ class ZaloAdapter(abstract_platform_adapter.AbstractMessagePlatformAdapter):
         if missing:
             raise command_errors.ParamNotEnoughError(f'Zalo 机器人缺少配置项: {missing}')
 
-        self.bot = ZaloClient(
+        bot = ZaloClient(
             app_id=config['app_id'],
             access_token=config['access_token'],
             secret_key=config['secret_key'],
@@ -69,8 +69,12 @@ class ZaloAdapter(abstract_platform_adapter.AbstractMessagePlatformAdapter):
             logger=logger,
         )
 
-        bot_account_id = config.get('app_id', '')
-        super().__init__(bot=self.bot, bot_account_id=bot_account_id, config=config, logger=logger)
+        super().__init__(
+            bot=bot,
+            bot_account_id=config.get('app_id', ''),
+            config=config,
+            logger=logger,
+        )
 
     async def reply_message(
         self,
