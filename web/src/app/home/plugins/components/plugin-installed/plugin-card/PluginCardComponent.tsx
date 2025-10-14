@@ -1,21 +1,10 @@
-import { PluginCardVO } from '@/app/home/plugins/plugin-installed/PluginCardVO';
+import { PluginCardVO } from '@/app/home/plugins/components/plugin-installed/PluginCardVO';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { useTranslation } from 'react-i18next';
-import { TFunction } from 'i18next';
-import {
-  AudioWaveform,
-  Wrench,
-  Hash,
-  BugIcon,
-  ExternalLink,
-  Ellipsis,
-  Trash,
-  ArrowUp,
-} from 'lucide-react';
+import { BugIcon, ExternalLink, Ellipsis, Trash, ArrowUp } from 'lucide-react';
 import { getCloudServiceClientSync } from '@/app/infra/http';
 import { httpClient } from '@/app/infra/http/HttpClient';
-import { PluginComponent } from '@/app/infra/entities/plugin';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -23,49 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-
-function getComponentList(components: PluginComponent[], t: TFunction) {
-  const componentKindCount: Record<string, number> = {};
-
-  for (const component of components) {
-    const kind = component.manifest.manifest.kind;
-    if (componentKindCount[kind]) {
-      componentKindCount[kind]++;
-    } else {
-      componentKindCount[kind] = 1;
-    }
-  }
-
-  const kindIconMap: Record<string, React.ReactNode> = {
-    Tool: <Wrench className="w-5 h-5" />,
-    EventListener: <AudioWaveform className="w-5 h-5" />,
-    Command: <Hash className="w-5 h-5" />,
-  };
-
-  const componentKindList = Object.keys(componentKindCount);
-
-  return (
-    <>
-      <div>{t('plugins.componentsList')}</div>
-      {componentKindList.length > 0 && (
-        <>
-          {componentKindList.map((kind) => {
-            return (
-              <div
-                key={kind}
-                className="flex flex-row items-center justify-start gap-[0.4rem]"
-              >
-                {kindIconMap[kind]} {componentKindCount[kind]}
-              </div>
-            );
-          })}
-        </>
-      )}
-
-      {componentKindList.length === 0 && <div>{t('plugins.noComponents')}</div>}
-    </>
-  );
-}
+import PluginComponentList from '@/app/home/plugins/components/plugin-installed/PluginComponentList';
 
 export default function PluginCardComponent({
   cardVO,
@@ -180,7 +127,13 @@ export default function PluginCardComponent({
             </div>
 
             <div className="w-full flex flex-row items-start justify-start gap-[0.6rem]">
-              {getComponentList(cardVO.components, t)}
+              <PluginComponentList
+                components={cardVO.components}
+                showComponentName={false}
+                showTitle={true}
+                useBadge={false}
+                t={t}
+              />
             </div>
           </div>
 

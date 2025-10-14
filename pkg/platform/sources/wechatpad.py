@@ -139,7 +139,7 @@ class WeChatPadMessageConverter(abstract_platform_adapter.AbstractMessageConvert
             pattern = r'@\S{1,20}'
             content_no_preifx = re.sub(pattern, '', content_no_preifx)
 
-        return platform_message.MessageChain([platform_message.Plain(content_no_preifx)])
+        return platform_message.MessageChain([platform_message.Plain(text=content_no_preifx)])
 
     async def _handler_image(self, message: Optional[dict], content_no_preifx: str) -> platform_message.MessageChain:
         """处理图像消息 (msg_type=3)"""
@@ -265,7 +265,7 @@ class WeChatPadMessageConverter(abstract_platform_adapter.AbstractMessageConvert
             # 文本消息
             try:
                 if '<msg>' not in quote_data:
-                    quote_data_message_list.append(platform_message.Plain(quote_data))
+                    quote_data_message_list.append(platform_message.Plain(text=quote_data))
                 else:
                     # 引用消息展开
                     quote_data_xml = ET.fromstring(quote_data)
@@ -280,7 +280,7 @@ class WeChatPadMessageConverter(abstract_platform_adapter.AbstractMessageConvert
                         quote_data_message_list.extend(await self._handler_compound(None, quote_data))
             except Exception as e:
                 self.logger.error(f'处理引用消息异常 expcetion:{e}')
-                quote_data_message_list.append(platform_message.Plain(quote_data))
+                quote_data_message_list.append(platform_message.Plain(text=quote_data))
             message_list.append(
                 platform_message.Quote(
                     sender_id=sender_id,
@@ -290,7 +290,7 @@ class WeChatPadMessageConverter(abstract_platform_adapter.AbstractMessageConvert
             if len(user_data) > 0:
                 pattern = r'@\S{1,20}'
                 user_data = re.sub(pattern, '', user_data)
-                message_list.append(platform_message.Plain(user_data))
+                message_list.append(platform_message.Plain(text=user_data))
 
         return platform_message.MessageChain(message_list)
 
@@ -543,7 +543,6 @@ class WeChatPadAdapter(abstract_platform_adapter.AbstractMessagePlatformAdapter)
     ] = {}
 
     def __init__(self, config: dict, logger: EventLogger):
-
         quart_app = quart.Quart(__name__)
 
         message_converter = WeChatPadMessageConverter(config, logger)
@@ -551,15 +550,14 @@ class WeChatPadAdapter(abstract_platform_adapter.AbstractMessagePlatformAdapter)
         bot = WeChatPadClient(config['wechatpad_url'], config['token'])
         super().__init__(
             config=config,
-            logger = logger,
-            quart_app = quart_app,
-            message_converter =message_converter,
-            event_converter = event_converter,
+            logger=logger,
+            quart_app=quart_app,
+            message_converter=message_converter,
+            event_converter=event_converter,
             listeners={},
-            bot_account_id ='',
-            name="WeChatPad",
+            bot_account_id='',
+            name='WeChatPad',
             bot=bot,
-
         )
 
     async def ws_message(self, data):

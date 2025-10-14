@@ -35,11 +35,17 @@ class PreProcessor(stage.PipelineStage):
         session = await self.ap.sess_mgr.get_session(query)
 
         # When not local-agent, llm_model is None
-        llm_model = (
-            await self.ap.model_mgr.get_model_by_uuid(query.pipeline_config['ai']['local-agent']['model'])
-            if selected_runner == 'local-agent'
-            else None
-        )
+        try:
+            llm_model = (
+                await self.ap.model_mgr.get_model_by_uuid(query.pipeline_config['ai']['local-agent']['model'])
+                if selected_runner == 'local-agent'
+                else None
+            )
+        except ValueError:
+            self.ap.logger.warning(
+                f'LLM model {query.pipeline_config["ai"]["local-agent"]["model"] + " "}not found or not configured'
+            )
+            llm_model = None
 
         conversation = await self.ap.sess_mgr.get_conversation(
             query,
@@ -54,7 +60,7 @@ class PreProcessor(stage.PipelineStage):
         query.prompt = conversation.prompt.copy()
         query.messages = conversation.messages.copy()
 
-        if selected_runner == 'local-agent':
+        if selected_runner == 'local-agent' and llm_model:
             query.use_funcs = []
             query.use_llm_model_uuid = llm_model.model_entity.uuid
 
@@ -72,7 +78,11 @@ class PreProcessor(stage.PipelineStage):
 
         # Check if this model supports vision, if not, remove all images
         # TODO this checking should be performed in runner, and in this stage, the image should be reserved
-        if selected_runner == 'local-agent' and not llm_model.model_entity.abilities.__contains__('vision'):
+        if (
+            selected_runner == 'local-agent'
+            and llm_model
+            and not llm_model.model_entity.abilities.__contains__('vision')
+        ):
             for msg in query.messages:
                 if isinstance(msg.content, list):
                     for me in msg.content:
@@ -89,7 +99,9 @@ class PreProcessor(stage.PipelineStage):
                 content_list.append(provider_message.ContentElement.from_text(me.text))
                 plain_text += me.text
             elif isinstance(me, platform_message.Image):
-                if selected_runner != 'local-agent' or llm_model.model_entity.abilities.__contains__('vision'):
+                if selected_runner != 'local-agent' or (
+                    llm_model and llm_model.model_entity.abilities.__contains__('vision')
+                ):
                     if me.base64 is not None:
                         content_list.append(provider_message.ContentElement.from_image_base64(me.base64))
             elif isinstance(me, platform_message.File):
@@ -100,7 +112,9 @@ class PreProcessor(stage.PipelineStage):
                     if isinstance(msg, platform_message.Plain):
                         content_list.append(provider_message.ContentElement.from_text(msg.text))
                     elif isinstance(msg, platform_message.Image):
-                        if selected_runner != 'local-agent' or llm_model.model_entity.abilities.__contains__('vision'):
+                        if selected_runner != 'local-agent' or (
+                            llm_model and llm_model.model_entity.abilities.__contains__('vision')
+                        ):
                             if msg.base64 is not None:
                                 content_list.append(provider_message.ContentElement.from_image_base64(msg.base64))
 

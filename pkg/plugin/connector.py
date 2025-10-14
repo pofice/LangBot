@@ -215,7 +215,7 @@ class PluginRuntimeConnector:
         if not self.is_enable_plugin:
             return event_ctx
 
-        event_ctx_result = await self.handler.emit_event(event_ctx.model_dump(serialize_as_any=True))
+        event_ctx_result = await self.handler.emit_event(event_ctx.model_dump(serialize_as_any=False))
 
         event_ctx = context.EventContext.model_validate(event_ctx_result['event_context'])
 

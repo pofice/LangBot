@@ -1,8 +1,8 @@
 'use client';
 import PluginInstalledComponent, {
   PluginInstalledComponentRef,
-} from '@/app/home/plugins/plugin-installed/PluginInstalledComponent';
-import MarketPage from '@/app/home/plugins/plugin-market/PluginMarketComponent';
+} from '@/app/home/plugins/components/plugin-installed/PluginInstalledComponent';
+import MarketPage from '@/app/home/plugins/components/plugin-market/PluginMarketComponent';
 // import PluginSortDialog from '@/app/home/plugins/plugin-sort/PluginSortDialog';
 import styles from './plugins.module.css';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';

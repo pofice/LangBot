@@ -29,7 +29,17 @@ export default function PluginConfigPage() {
   const [sortOrderValue, setSortOrderValue] = useState<string>('DESC');
 
   useEffect(() => {
-    getPipelines();
+    // Load sort preference from localStorage
+    const savedSortBy = localStorage.getItem('pipeline_sort_by');
+    const savedSortOrder = localStorage.getItem('pipeline_sort_order');
+
+    if (savedSortBy && savedSortOrder) {
+      setSortByValue(savedSortBy);
+      setSortOrderValue(savedSortOrder);
+      getPipelines(savedSortBy, savedSortOrder);
+    } else {
+      getPipelines();
+    }
   }, []);
 
   function getPipelines(
@@ -91,6 +101,11 @@ export default function PluginConfigPage() {
     const [newSortBy, newSortOrder] = value.split(',').map((s) => s.trim());
     setSortByValue(newSortBy);
     setSortOrderValue(newSortOrder);
+
+    // Save sort preference to localStorage
+    localStorage.setItem('pipeline_sort_by', newSortBy);
+    localStorage.setItem('pipeline_sort_order', newSortOrder);
+
     getPipelines(newSortBy, newSortOrder);
   }
 
@@ -134,6 +149,12 @@ export default function PluginConfigPage() {
               className="text-gray-900 dark:text-gray-100"
             >
               {t('pipelines.newestCreated')}
+            </SelectItem>
+            <SelectItem
+              value="created_at,ASC"
+              className="text-gray-900 dark:text-gray-100"
+            >
+              {t('pipelines.earliestCreated')}
             </SelectItem>
             <SelectItem
               value="updated_at,DESC"

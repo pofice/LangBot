@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { extractI18nObject } from '@/i18n/I18nProvider';
 import { useTranslation } from 'react-i18next';
+import PluginComponentList from '@/app/home/plugins/components/plugin-installed/PluginComponentList';
 
 export default function PluginForm({
   pluginAuthor,
@@ -78,6 +79,17 @@ export default function PluginForm({
             },
           )}
         </div>
+
+        <div className="mb-4 flex flex-row items-center justify-start gap-[0.4rem]">
+          <PluginComponentList
+            components={pluginInfo.components}
+            showComponentName={true}
+            showTitle={false}
+            useBadge={true}
+            t={t}
+          />
+        </div>
+
         {pluginInfo.manifest.manifest.spec.config.length > 0 && (
           <DynamicFormComponent
             itemConfigList={pluginInfo.manifest.manifest.spec.config}

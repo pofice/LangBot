@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
-import { PluginCardVO } from '@/app/home/plugins/plugin-installed/PluginCardVO';
-import PluginCardComponent from '@/app/home/plugins/plugin-installed/plugin-card/PluginCardComponent';
-import PluginForm from '@/app/home/plugins/plugin-installed/plugin-form/PluginForm';
+import { PluginCardVO } from '@/app/home/plugins/components/plugin-installed/PluginCardVO';
+import PluginCardComponent from '@/app/home/plugins/components/plugin-installed/plugin-card/PluginCardComponent';
+import PluginForm from '@/app/home/plugins/components/plugin-installed/plugin-form/PluginForm';
 import styles from '@/app/home/plugins/plugins.module.css';
 import { httpClient } from '@/app/infra/http/HttpClient';
 import {

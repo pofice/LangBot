@@ -213,7 +213,7 @@ class RuntimePipeline:
             await self._execute_from_stage(0, query)
         except Exception as e:
             inst_name = query.current_stage_name if query.current_stage_name else 'unknown'
-            self.ap.logger.error(f'处理请求时出错 query_id={query.query_id} stage={inst_name} : {e}')
+            self.ap.logger.error(f'Error processing query {query.query_id} stage={inst_name} : {e}')
             self.ap.logger.error(f'Traceback: {traceback.format_exc()}')
         finally:
             self.ap.logger.debug(f'Query {query.query_id} processed')
