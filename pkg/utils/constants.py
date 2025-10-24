@@ -1,4 +1,4 @@
-semantic_version = 'v4.3.8'
+semantic_version = 'v4.3.9'
 
 required_database_version = 8
 """Tag the version of the database schema, used to check if the database needs to be migrated"""

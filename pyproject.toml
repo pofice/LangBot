@@ -1,6 +1,6 @@
 [project]
 name = "langbot"
-version = "4.3.8"
+version = "4.3.9"
 description = "Easy-to-use global IM bot platform designed for LLM era"
 readme = "README.md"
 requires-python = ">=3.10.1,<4.0"
