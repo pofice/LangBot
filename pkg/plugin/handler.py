@@ -56,7 +56,9 @@ class RuntimeConnectionHandler(handler.Handler):
                     .where(persistence_plugin.PluginSetting.plugin_name == plugin_name)
                 )
 
-                if result.first() is not None:
+                setting = result.first()
+
+                if setting is not None:
                     # delete plugin setting
                     await self.ap.persistence_mgr.execute_async(
                         sqlalchemy.delete(persistence_plugin.PluginSetting)
@@ -71,6 +73,10 @@ class RuntimeConnectionHandler(handler.Handler):
                         plugin_name=plugin_name,
                         install_source=install_source,
                         install_info=install_info,
+                        # inherit from existing setting
+                        enabled=setting.enabled if setting is not None else True,
+                        priority=setting.priority if setting is not None else 0,
+                        config=setting.config if setting is not None else {},  # noqa: F821
                     )
                 )
 
@@ -430,6 +436,25 @@ class RuntimeConnectionHandler(handler.Handler):
                 },
             )
 
+        @self.action(RuntimeToLangBotAction.GET_CONFIG_FILE)
+        async def get_config_file(data: dict[str, Any]) -> handler.ActionResponse:
+            """Get a config file by file key"""
+            file_key = data['file_key']
+
+            try:
+                # Load file from storage
+                file_bytes = await self.ap.storage_mgr.storage_provider.load(file_key)
+
+                return handler.ActionResponse.success(
+                    data={
+                        'file_base64': base64.b64encode(file_bytes).decode('utf-8'),
+                    },
+                )
+            except Exception as e:
+                return handler.ActionResponse.error(
+                    message=f'Failed to load config file {file_key}: {e}',
+                )
+
     async def ping(self) -> dict[str, Any]:
         """Ping the runtime"""
         return await self.call_action(
@@ -529,23 +554,27 @@ class RuntimeConnectionHandler(handler.Handler):
     async def emit_event(
         self,
         event_context: dict[str, Any],
+        include_plugins: list[str] | None = None,
     ) -> dict[str, Any]:
         """Emit event"""
         result = await self.call_action(
             LangBotToRuntimeAction.EMIT_EVENT,
             {
                 'event_context': event_context,
+                'include_plugins': include_plugins,
             },
             timeout=60,
         )
 
         return result
 
-    async def list_tools(self) -> list[dict[str, Any]]:
+    async def list_tools(self, include_plugins: list[str] | None = None) -> list[dict[str, Any]]:
         """List tools"""
         result = await self.call_action(
             LangBotToRuntimeAction.LIST_TOOLS,
-            {},
+            {
+                'include_plugins': include_plugins,
+            },
             timeout=20,
         )
 
@@ -573,34 +602,59 @@ class RuntimeConnectionHandler(handler.Handler):
             'mime_type': mime_type,
         }
 
-    async def call_tool(self, tool_name: str, parameters: dict[str, Any]) -> dict[str, Any]:
+    async def cleanup_plugin_data(self, plugin_author: str, plugin_name: str) -> None:
+        """Cleanup plugin settings and binary storage"""
+        # Delete plugin settings
+        await self.ap.persistence_mgr.execute_async(
+            sqlalchemy.delete(persistence_plugin.PluginSetting)
+            .where(persistence_plugin.PluginSetting.plugin_author == plugin_author)
+            .where(persistence_plugin.PluginSetting.plugin_name == plugin_name)
+        )
+
+        # Delete all binary storage for this plugin
+        owner = f'{plugin_author}/{plugin_name}'
+        await self.ap.persistence_mgr.execute_async(
+            sqlalchemy.delete(persistence_bstorage.BinaryStorage)
+            .where(persistence_bstorage.BinaryStorage.owner_type == 'plugin')
+            .where(persistence_bstorage.BinaryStorage.owner == owner)
+        )
+
+    async def call_tool(
+        self, tool_name: str, parameters: dict[str, Any], include_plugins: list[str] | None = None
+    ) -> dict[str, Any]:
         """Call tool"""
         result = await self.call_action(
             LangBotToRuntimeAction.CALL_TOOL,
             {
                 'tool_name': tool_name,
                 'tool_parameters': parameters,
+                'include_plugins': include_plugins,
             },
             timeout=60,
         )
 
         return result['tool_response']
 
-    async def list_commands(self) -> list[dict[str, Any]]:
+    async def list_commands(self, include_plugins: list[str] | None = None) -> list[dict[str, Any]]:
         """List commands"""
         result = await self.call_action(
             LangBotToRuntimeAction.LIST_COMMANDS,
-            {},
+            {
+                'include_plugins': include_plugins,
+            },
             timeout=10,
         )
         return result['commands']
 
-    async def execute_command(self, command_context: dict[str, Any]) -> typing.AsyncGenerator[dict[str, Any], None]:
+    async def execute_command(
+        self, command_context: dict[str, Any], include_plugins: list[str] | None = None
+    ) -> typing.AsyncGenerator[dict[str, Any], None]:
         """Execute command"""
         gen = self.call_action_generator(
             LangBotToRuntimeAction.EXECUTE_COMMAND,
             {
                 'command_context': command_context,
+                'include_plugins': include_plugins,
             },
             timeout=60,
         )

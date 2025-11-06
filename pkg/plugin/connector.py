@@ -6,19 +6,24 @@ from typing import Any
 import typing
 import os
 import sys
-
+import httpx
 from async_lru import alru_cache
 
 from ..core import app
 from . import handler
 from ..utils import platform
-from langbot_plugin.runtime.io.controllers.stdio import client as stdio_client_controller
+from langbot_plugin.runtime.io.controllers.stdio import (
+    client as stdio_client_controller,
+)
 from langbot_plugin.runtime.io.controllers.ws import client as ws_client_controller
 from langbot_plugin.api.entities import events
 from langbot_plugin.api.entities import context
 import langbot_plugin.runtime.io.connection as base_connection
 from langbot_plugin.api.definition.components.manifest import ComponentManifest
-from langbot_plugin.api.entities.builtin.command import context as command_context, errors as command_errors
+from langbot_plugin.api.entities.builtin.command import (
+    context as command_context,
+    errors as command_errors,
+)
 from langbot_plugin.runtime.plugin.mgr import PluginInstallSource
 from ..core import taskmgr
 
@@ -58,7 +63,7 @@ class PluginRuntimeConnector:
 
     async def heartbeat_loop(self):
         while True:
-            await asyncio.sleep(10)
+            await asyncio.sleep(20)
             try:
                 await self.ping_plugin_runtime()
                 self.ap.logger.debug('Heartbeat to plugin runtime success.')
@@ -71,7 +76,9 @@ class PluginRuntimeConnector:
             return
 
         async def new_connection_callback(connection: base_connection.Connection):
-            async def disconnect_callback(rchandler: handler.RuntimeConnectionHandler) -> bool:
+            async def disconnect_callback(
+                rchandler: handler.RuntimeConnectionHandler,
+            ) -> bool:
                 if platform.get_platform() == 'docker' or platform.use_websocket_to_connect_plugin_runtime():
                     self.ap.logger.error('Disconnected from plugin runtime, trying to reconnect...')
                     await self.runtime_disconnect_callback(self)
@@ -98,7 +105,8 @@ class PluginRuntimeConnector:
             )
 
             async def make_connection_failed_callback(
-                ctrl: ws_client_controller.WebSocketClientController, exc: Exception = None
+                ctrl: ws_client_controller.WebSocketClientController,
+                exc: Exception = None,
             ) -> None:
                 if exc is not None:
                     self.ap.logger.error(f'Failed to connect to plugin runtime({ws_url}): {exc}')
@@ -150,6 +158,25 @@ class PluginRuntimeConnector:
             install_info['plugin_file_key'] = file_key
             del install_info['plugin_file']
             self.ap.logger.info(f'Transfered file {file_key} to plugin runtime')
+        elif install_source == PluginInstallSource.GITHUB:
+            # download and transfer file
+            try:
+                async with httpx.AsyncClient(
+                    trust_env=True,
+                    follow_redirects=True,
+                    timeout=20,
+                ) as client:
+                    response = await client.get(
+                        install_info['asset_url'],
+                    )
+                    response.raise_for_status()
+                    file_bytes = response.content
+                    file_key = await self.handler.send_file(file_bytes, 'lbpkg')
+                    install_info['plugin_file_key'] = file_key
+                    self.ap.logger.info(f'Transfered file {file_key} to plugin runtime')
+            except Exception as e:
+                self.ap.logger.error(f'Failed to download file from GitHub: {e}')
+                raise Exception(f'Failed to download file from GitHub: {e}')
 
         async for ret in self.handler.install_plugin(install_source.value, install_info):
             current_action = ret.get('current_action', None)
@@ -163,7 +190,10 @@ class PluginRuntimeConnector:
                     task_context.trace(trace)
 
     async def upgrade_plugin(
-        self, plugin_author: str, plugin_name: str, task_context: taskmgr.TaskContext | None = None
+        self,
+        plugin_author: str,
+        plugin_name: str,
+        task_context: taskmgr.TaskContext | None = None,
     ) -> dict[str, Any]:
         async for ret in self.handler.upgrade_plugin(plugin_author, plugin_name):
             current_action = ret.get('current_action', None)
@@ -177,7 +207,11 @@ class PluginRuntimeConnector:
                     task_context.trace(trace)
 
     async def delete_plugin(
-        self, plugin_author: str, plugin_name: str, task_context: taskmgr.TaskContext | None = None
+        self,
+        plugin_author: str,
+        plugin_name: str,
+        delete_data: bool = False,
+        task_context: taskmgr.TaskContext | None = None,
     ) -> dict[str, Any]:
         async for ret in self.handler.delete_plugin(plugin_author, plugin_name):
             current_action = ret.get('current_action', None)
@@ -189,6 +223,12 @@ class PluginRuntimeConnector:
             if trace is not None:
                 if task_context is not None:
                     task_context.trace(trace)
+
+        # Clean up plugin settings and binary storage if requested
+        if delete_data:
+            if task_context is not None:
+                task_context.trace('Cleaning up plugin configuration and storage...')
+            await self.handler.cleanup_plugin_data(plugin_author, plugin_name)
 
     async def list_plugins(self) -> list[dict[str, Any]]:
         if not self.is_enable_plugin:
@@ -209,47 +249,62 @@ class PluginRuntimeConnector:
     async def emit_event(
         self,
         event: events.BaseEventModel,
+        bound_plugins: list[str] | None = None,
     ) -> context.EventContext:
         event_ctx = context.EventContext.from_event(event)
 
         if not self.is_enable_plugin:
             return event_ctx
 
-        event_ctx_result = await self.handler.emit_event(event_ctx.model_dump(serialize_as_any=False))
+        # Pass include_plugins to runtime for filtering
+        event_ctx_result = await self.handler.emit_event(
+            event_ctx.model_dump(serialize_as_any=False), include_plugins=bound_plugins
+        )
 
         event_ctx = context.EventContext.model_validate(event_ctx_result['event_context'])
 
         return event_ctx
 
-    async def list_tools(self) -> list[ComponentManifest]:
+    async def list_tools(self, bound_plugins: list[str] | None = None) -> list[ComponentManifest]:
         if not self.is_enable_plugin:
             return []
 
-        list_tools_data = await self.handler.list_tools()
+        # Pass include_plugins to runtime for filtering
+        list_tools_data = await self.handler.list_tools(include_plugins=bound_plugins)
 
-        return [ComponentManifest.model_validate(tool) for tool in list_tools_data]
+        tools = [ComponentManifest.model_validate(tool) for tool in list_tools_data]
 
-    async def call_tool(self, tool_name: str, parameters: dict[str, Any]) -> dict[str, Any]:
+        return tools
+
+    async def call_tool(
+        self, tool_name: str, parameters: dict[str, Any], bound_plugins: list[str] | None = None
+    ) -> dict[str, Any]:
         if not self.is_enable_plugin:
             return {'error': 'Tool not found: plugin system is disabled'}
 
-        return await self.handler.call_tool(tool_name, parameters)
+        # Pass include_plugins to runtime for validation
+        return await self.handler.call_tool(tool_name, parameters, include_plugins=bound_plugins)
 
-    async def list_commands(self) -> list[ComponentManifest]:
+    async def list_commands(self, bound_plugins: list[str] | None = None) -> list[ComponentManifest]:
         if not self.is_enable_plugin:
             return []
 
-        list_commands_data = await self.handler.list_commands()
+        # Pass include_plugins to runtime for filtering
+        list_commands_data = await self.handler.list_commands(include_plugins=bound_plugins)
 
-        return [ComponentManifest.model_validate(command) for command in list_commands_data]
+        commands = [ComponentManifest.model_validate(command) for command in list_commands_data]
+
+        return commands
 
     async def execute_command(
-        self, command_ctx: command_context.ExecuteContext
+        self, command_ctx: command_context.ExecuteContext, bound_plugins: list[str] | None = None
     ) -> typing.AsyncGenerator[command_context.CommandReturn, None]:
         if not self.is_enable_plugin:
             yield command_context.CommandReturn(error=command_errors.CommandNotFoundError(command_ctx.command))
+            return
 
-        gen = self.handler.execute_command(command_ctx.model_dump(serialize_as_any=True))
+        # Pass include_plugins to runtime for validation
+        gen = self.handler.execute_command(command_ctx.model_dump(serialize_as_any=True), include_plugins=bound_plugins)
 
         async for ret in gen:
             cmd_ret = command_context.CommandReturn.model_validate(ret)

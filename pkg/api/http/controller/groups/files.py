@@ -31,19 +31,41 @@ class FilesRouterGroup(group.RouterGroup):
         @self.route('/documents', methods=['POST'], auth_type=group.AuthType.USER_TOKEN)
         async def _() -> quart.Response:
             request = quart.request
+
+            # Check file size limit before reading the file
+            content_length = request.content_length
+            if content_length and content_length > group.MAX_FILE_SIZE:
+                return self.fail(400, 'File size exceeds 10MB limit. Please split large files into smaller parts.')
+
             # get file bytes from 'file'
-            file = (await request.files)['file']
+            files = await request.files
+            if 'file' not in files:
+                return self.fail(400, 'No file provided in request')
+
+            file = files['file']
             assert isinstance(file, quart.datastructures.FileStorage)
 
             file_bytes = await asyncio.to_thread(file.stream.read)
-            extension = file.filename.split('.')[-1]
-            file_name = file.filename.split('.')[0]
+
+            # Double-check actual file size after reading
+            if len(file_bytes) > group.MAX_FILE_SIZE:
+                return self.fail(400, 'File size exceeds 10MB limit. Please split large files into smaller parts.')
+
+            # Split filename and extension properly
+            if '.' in file.filename:
+                file_name, extension = file.filename.rsplit('.', 1)
+            else:
+                file_name = file.filename
+                extension = ''
 
             # check if file name contains '/' or '\'
             if '/' in file_name or '\\' in file_name:
                 return self.fail(400, 'File name contains invalid characters')
 
-            file_key = file_name + '_' + str(uuid.uuid4())[:8] + '.' + extension
+            file_key = file_name + '_' + str(uuid.uuid4())[:8]
+            if extension:
+                file_key += '.' + extension
+
             # save file to storage
             await self.ap.storage_mgr.storage_provider.save(file_key, file_bytes)
             return self.success(
