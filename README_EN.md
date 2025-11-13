@@ -105,6 +105,7 @@ Or visit the demo environment: https://demo.langbot.dev/
 | [CompShare](https://www.compshare.cn/?ytag=GPU_YY-gh_langbot) | ✅ | LLM and GPU resource platform |
 | [Dify](https://dify.ai) | ✅ | LLMOps platform |
 | [PPIO](https://ppinfra.com/user/register?invited_by=QJKFYD&utm_source=github_langbot) | ✅ | LLM and GPU resource platform |
+| [接口 AI](https://jiekou.ai/) | ✅ | LLM aggregation platform, dedicated to global LLMs |
 | [ShengSuanYun](https://www.shengsuanyun.com/?from=CH_KYIPP758) | ✅ | LLM and GPU resource platform |
 | [302.AI](https://share.302.ai/SuTG99) | ✅ | LLM gateway(MaaS) |
 | [Google Gemini](https://aistudio.google.com/prompts/new_chat) | ✅ | |

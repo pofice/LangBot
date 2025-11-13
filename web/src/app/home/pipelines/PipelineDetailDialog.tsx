@@ -39,7 +39,6 @@ export default function PipelineDialog({
   onOpenChange,
   pipelineId: propPipelineId,
   isEditMode = false,
-  isDefaultPipeline = false,
   onFinish,
   onNewPipelineCreated,
   onDeletePipeline,
@@ -133,7 +132,6 @@ export default function PipelineDialog({
             </DialogHeader>
             <div className="flex-1 overflow-y-auto px-6 pb-6">
               <PipelineFormComponent
-                isDefaultPipeline={isDefaultPipeline}
                 onFinish={handleFinish}
                 onNewPipelineCreated={handleNewPipelineCreated}
                 isEditMode={isEditMode}
@@ -197,7 +195,6 @@ export default function PipelineDialog({
             >
               {currentMode === 'config' && (
                 <PipelineFormComponent
-                  isDefaultPipeline={isDefaultPipeline}
                   onFinish={handleFinish}
                   onNewPipelineCreated={handleNewPipelineCreated}
                   isEditMode={isEditMode}

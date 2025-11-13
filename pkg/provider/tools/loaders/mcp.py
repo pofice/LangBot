@@ -30,6 +30,8 @@ class RuntimeMCPSession:
 
     server_name: str
 
+    server_uuid: str
+
     server_config: dict
 
     session: ClientSession
@@ -43,7 +45,6 @@ class RuntimeMCPSession:
     # connected: bool
     status: MCPSessionStatus
 
-
     _lifecycle_task: asyncio.Task | None
 
     _shutdown_event: asyncio.Event
@@ -52,6 +53,7 @@ class RuntimeMCPSession:
 
     def __init__(self, server_name: str, server_config: dict, enable: bool, ap: app.Application):
         self.server_name = server_name
+        self.server_uuid = server_config.get('uuid', '')
         self.server_config = server_config
         self.ap = ap
         self.enable = enable
@@ -286,12 +288,14 @@ class MCPLoader(loader.ToolLoader):
         """
 
         name = server_config['name']
+        uuid = server_config['uuid']
         mode = server_config['mode']
         enable = server_config['enable']
         extra_args = server_config.get('extra_args', {})
 
         mixed_config = {
             'name': name,
+            'uuid': uuid,
             'mode': mode,
             'enable': enable,
             **extra_args,
@@ -301,11 +305,17 @@ class MCPLoader(loader.ToolLoader):
 
         return session
 
-    async def get_tools(self, bound_plugins: list[str] | None = None) -> list[resource_tool.LLMTool]:
+    async def get_tools(self, bound_mcp_servers: list[str] | None = None) -> list[resource_tool.LLMTool]:
         all_functions = []
 
         for session in self.sessions.values():
-            all_functions.extend(session.get_tools())
+            # If bound_mcp_servers is specified, only include tools from those servers
+            if bound_mcp_servers is not None:
+                if session.server_uuid in bound_mcp_servers:
+                    all_functions.extend(session.get_tools())
+            else:
+                # If no bound servers specified, include all tools
+                all_functions.extend(session.get_tools())
 
         self._last_listed_functions = all_functions
 

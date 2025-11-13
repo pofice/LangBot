@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import aiofiles
+import shutil
 
 from ...core import app
 
@@ -22,6 +23,8 @@ class LocalStorageProvider(provider.StorageProvider):
         key: str,
         value: bytes,
     ):
+        if not os.path.exists(os.path.join(LOCAL_STORAGE_PATH, os.path.dirname(key))):
+            os.makedirs(os.path.join(LOCAL_STORAGE_PATH, os.path.dirname(key)))
         async with aiofiles.open(os.path.join(LOCAL_STORAGE_PATH, f'{key}'), 'wb') as f:
             await f.write(value)
 
@@ -43,3 +46,11 @@ class LocalStorageProvider(provider.StorageProvider):
         key: str,
     ):
         os.remove(os.path.join(LOCAL_STORAGE_PATH, f'{key}'))
+
+    async def delete_dir_recursive(
+        self,
+        dir_path: str,
+    ):
+        # 直接删除整个目录
+        if os.path.exists(os.path.join(LOCAL_STORAGE_PATH, dir_path)):
+            shutil.rmtree(os.path.join(LOCAL_STORAGE_PATH, dir_path))

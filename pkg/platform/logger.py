@@ -149,7 +149,7 @@ class EventLogger(abstract_platform_event_logger.AbstractEventLogger):
                 extension = mimetypes.guess_extension(mime_type)
                 if extension is None:
                     extension = '.jpg'
-                image_key = f'{message_session_id}-{uuid.uuid4()}{extension}'
+                image_key = f'bot_log_images/{message_session_id}-{uuid.uuid4()}{extension}'
                 await self.ap.storage_mgr.storage_provider.save(image_key, img_bytes)
                 image_keys.append(image_key)
 

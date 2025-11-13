@@ -42,3 +42,10 @@ class StorageProvider(abc.ABC):
         key: str,
     ):
         pass
+
+    @abc.abstractmethod
+    async def delete_dir_recursive(
+        self,
+        dir_path: str,
+    ):
+        pass
