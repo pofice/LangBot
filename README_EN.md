@@ -25,6 +25,16 @@ LangBot is an open-source LLM native instant messaging robot development platfor
 
 ## 📦 Getting Started
 
+#### Quick Start
+
+Use `uvx` to start with one command (need to install [uv](https://docs.astral.sh/uv/getting-started/installation/)):
+
+```bash
+uvx langbot
+```
+
+Visit http://localhost:5300 to start using it.
+
 #### Docker Compose Deployment
 
 ```bash
@@ -54,6 +64,10 @@ Community contributed Zeabur template.
 #### Other Deployment Methods
 
 Directly use the released version to run, see the [Manual Deployment](https://docs.langbot.app/en/deploy/langbot/manual.html) documentation.
+
+#### Kubernetes Deployment
+
+Refer to the [Kubernetes Deployment](./docker/README_K8S.md) documentation.
 
 ## 😎 Stay Ahead
 

@@ -27,6 +27,16 @@ LangBot 是一個開源的大語言模型原生即時通訊機器人開發平台
 
 ## 📦 開始使用
 
+#### 快速部署
+
+使用 `uvx` 一鍵啟動（需要先安裝 [uv](https://docs.astral.sh/uv/getting-started/installation/) ）：
+
+```bash
+uvx langbot
+```
+
+訪問 http://localhost:5300 即可開始使用。
+
 #### Docker Compose 部署
 
 ```bash
@@ -56,6 +66,10 @@ docker compose up -d
 #### 手動部署
 
 直接使用發行版運行，查看文件[手動部署](https://docs.langbot.app/zh/deploy/langbot/manual.html)。
+
+#### Kubernetes 部署
+
+參考 [Kubernetes 部署](./docker/README_K8S.md) 文件。
 
 ## 😎 保持更新
 

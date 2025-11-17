@@ -25,6 +25,16 @@ LangBot は、エージェント、RAG、MCP などの LLM アプリケーショ
 
 ## 📦 始め方
 
+#### クイックスタート
+
+`uvx` を使用した迅速なデプロイ（[uv](https://docs.astral.sh/uv/getting-started/installation/) が必要です）：
+
+```bash
+uvx langbot
+```
+
+http://localhost:5300 にアクセスして使用を開始します。
+
 #### Docker Compose デプロイ
 
 ```bash
@@ -54,6 +64,10 @@ LangBotはBTPanelにリストされています。BTPanelをインストール�
 #### その他のデプロイ方法
 
 リリースバージョンを直接使用して実行します。[手動デプロイ](https://docs.langbot.app/en/deploy/langbot/manual.html)のドキュメントを参照してください。
+
+#### Kubernetes デプロイ
+
+[Kubernetes デプロイ](./docker/README_K8S.md) ドキュメントを参照してください。
 
 ## 😎 最新情報を入手
 
