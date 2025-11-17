@@ -10,6 +10,7 @@ import langbot_plugin.api.entities.builtin.provider.message as provider_message
 
 from .. import stage, entities
 import langbot_plugin.api.entities.builtin.pipeline.query as pipeline_query
+from ...api.http.service import message as message_service
 
 
 @stage.stage_class('SendResponseBackStage')
@@ -18,6 +19,25 @@ class SendResponseBackStage(stage.PipelineStage):
 
     async def process(self, query: pipeline_query.Query, stage_inst_name: str) -> entities.StageProcessResult:
         """处理"""
+
+        # Save user message to database
+        msg_service = message_service.MessageHistoryService(self.ap)
+        try:
+            # Save user's message
+            user_message_chain = [component.__dict__ for component in query.message_chain]
+            await msg_service.save_message(
+                bot_uuid=query.bot_uuid,
+                pipeline_uuid=query.pipeline_uuid or '',
+                launcher_type=query.launcher_type.value,
+                launcher_id=query.launcher_id,
+                sender_id=query.sender_id,
+                message_role='user',
+                message_content=str(query.message_chain),
+                message_chain=user_message_chain,
+                query_id=query.query_id,
+            )
+        except Exception as e:
+            self.ap.logger.error(f'Failed to save user message to database: {e}')
 
         random_range = (
             query.pipeline_config['output']['force-delay']['min'],
@@ -54,5 +74,22 @@ class SendResponseBackStage(stage.PipelineStage):
                 message=query.resp_message_chain[-1],
                 quote_origin=quote_origin,
             )
+
+        # Save assistant's response to database
+        try:
+            assistant_message_chain = [component.__dict__ for component in query.resp_message_chain[-1]]
+            await msg_service.save_message(
+                bot_uuid=query.bot_uuid,
+                pipeline_uuid=query.pipeline_uuid or '',
+                launcher_type=query.launcher_type.value,
+                launcher_id=query.launcher_id,
+                sender_id=query.bot_uuid,  # Bot is the sender of assistant messages
+                message_role='assistant',
+                message_content=str(query.resp_message_chain[-1]),
+                message_chain=assistant_message_chain,
+                query_id=query.query_id,
+            )
+        except Exception as e:
+            self.ap.logger.error(f'Failed to save assistant message to database: {e}')
 
         return entities.StageProcessResult(result_type=entities.ResultType.CONTINUE, new_query=query)
